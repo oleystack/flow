@@ -29,7 +29,7 @@ export interface StringField
     value: WaitableValue<string>,
     errorMessage?: string
   ) => StringField
-  endWith: (value: WaitableValue<string>, errorMessage?: string) => StringField
+  endsWith: (value: WaitableValue<string>, errorMessage?: string) => StringField
   minLength: (
     minLength: WaitableValue<number>,
     errorMessage?: string
@@ -75,7 +75,7 @@ export const field: Field<string, StringField> = (transforms) => ({
   startsWith: (value: WaitableValue<string>, errorMessage?: string) =>
     field([...transforms, startsWith(value, errorMessage)]),
 
-  endWith: (value: WaitableValue<string>, errorMessage?: string) =>
+  endsWith: (value: WaitableValue<string>, errorMessage?: string) =>
     field([...transforms, endsWith(value, errorMessage)]),
 
   minLength: (minLength: WaitableValue<number>, errorMessage?: string) =>
