@@ -1,4 +1,3 @@
-import { isNoneOf, isOneOf, isTheSame } from './helpers/compare'
 import { castToNumber } from './helpers/cast'
 import {
   endsWith,
@@ -9,59 +8,78 @@ import {
   startsWith,
   testRegExp
 } from './helpers/text'
-import { validateFn } from './helpers/validate'
 
-import { field as numberField, NumberField } from './number'
-import { field as genericField, GenericField } from './generic'
-import { transform } from './helpers/transform'
-import { checkCondition } from './helpers/condition'
+import { field as numberField } from './number'
+import { field as genericField } from './generic'
+import { createValidate, Validatable } from './traits/validatable'
+import { Comparable, isNoneOf, isOneOf } from './traits/comparable'
+import { checkCondition, Conditionable } from './traits/conditionable'
+import {
+  transform,
+  Transformable,
+  TransformableToNumber
+} from './traits/transformable'
+import { isTheSame } from './traits/equalable'
 
-export interface StringField {
-  // String is comparable
-  oneOf: (values: string[], errorMessage?: string) => StringField
-  noneOf: (values: string[], errorMessage?: string) => StringField
-  equals: (value: string, errorMessage?: string) => StringField
-
-  // Casts
-  toNumber: (errorMessage?: string) => NumberField
-
-  // String specific
-  regex: (pattern: string | RegExp, errorMessage?: string) => StringField
+export interface StringField
+  extends Validatable<string>,
+    Comparable<string, StringField>,
+    Conditionable<string, StringField>,
+    Transformable<string>,
+    TransformableToNumber<string> {
+  regex: (
+    pattern: WaitableValue<string | RegExp>,
+    errorMessage?: string
+  ) => StringField
   email: (errorMessage?: string) => StringField
   url: (errorMessage?: string) => StringField
-  startsWith: (value: string, errorMessage?: string) => StringField
-  endWith: (value: string, errorMessage?: string) => StringField
-  minLength: (minLength: number, errorMessage?: string) => StringField
-  maxLength: (maxLength: number, errorMessage?: string) => StringField
-
-  // Shared
-  to: <Out>(
-    transformation: TransformFn<string, Out>,
+  startsWith: (
+    value: WaitableValue<string>,
     errorMessage?: string
-  ) => GenericField<Out>
-  meets: (condition: ValidatorFn<string>, errorMessage?: string) => StringField
-  validate: ValidateFn<string>
+  ) => StringField
+  endWith: (value: WaitableValue<string>, errorMessage?: string) => StringField
+  minLength: (
+    minLength: WaitableValue<number>,
+    errorMessage?: string
+  ) => StringField
+  maxLength: (
+    maxLength: WaitableValue<number>,
+    errorMessage?: string
+  ) => StringField
 }
 
-export const field = (
-  transforms: FieldTransformsArray<string>
-): StringField => ({
-  // String is comparable
-  oneOf: (values: string[], errorMessage?: string) =>
+export const field: Field<string, StringField> = (transforms) => ({
+  // Comparable
+  oneOf: (values: WaitableValue<string[]>, errorMessage?: string) =>
     field([...transforms, isOneOf(values, errorMessage)]),
 
-  noneOf: (values: string[], errorMessage?: string) =>
+  noneOf: (values: WaitableValue<string[]>, errorMessage?: string) =>
     field([...transforms, isNoneOf(values, errorMessage)]),
 
-  equals: (value: string, errorMessage?: string) =>
+  equals: (value: WaitableValue<string>, errorMessage?: string) =>
     field([...transforms, isTheSame(value, errorMessage)]),
 
-  // Casts
-  toNumber: (errorMessage?: string) =>
-    numberField([...transforms, castToNumber(errorMessage)]),
+  // Transformable
+  toNumber: (
+    transformation: WaitableTransformFn<string, number> = (value) =>
+      Number(value),
+    errorMessage?: string
+  ) => numberField([...transforms, transform(transformation, errorMessage)]),
+
+  to: <Out>(
+    transformation: WaitableTransformFn<string, Out>,
+    errorMessage?: string
+  ) => genericField([...transforms, transform(transformation, errorMessage)]),
+
+  // Conditionable
+  meets: (condition: WaitableConditionFn<string>, errorMessage?: string) =>
+    field([...transforms, checkCondition(condition, errorMessage)]),
+
+  // Validatable
+  validate: createValidate(transforms),
 
   // String specific
-  regex: (pattern: string | RegExp, errorMessage?: string) =>
+  regex: (pattern: WaitableValue<string | RegExp>, errorMessage?: string) =>
     field([...transforms, testRegExp(pattern, errorMessage)]),
 
   email: (errorMessage?: string) =>
@@ -69,24 +87,15 @@ export const field = (
 
   url: (errorMessage?: string) => field([...transforms, isUrl(errorMessage)]),
 
-  startsWith: (value: string, errorMessage?: string) =>
+  startsWith: (value: WaitableValue<string>, errorMessage?: string) =>
     field([...transforms, startsWith(value, errorMessage)]),
 
-  endWith: (value: string, errorMessage?: string) =>
+  endWith: (value: WaitableValue<string>, errorMessage?: string) =>
     field([...transforms, endsWith(value, errorMessage)]),
 
-  minLength: (minLength: number, errorMessage?: string) =>
+  minLength: (minLength: WaitableValue<number>, errorMessage?: string) =>
     field([...transforms, hasMinLength(minLength, errorMessage)]),
 
-  maxLength: (maxLength: number, errorMessage?: string) =>
-    field([...transforms, hasMaxLength(maxLength, errorMessage)]),
-
-  // Shared
-  to: <Out>(transformation: TransformFn<string, Out>, errorMessage?: string) =>
-    genericField([...transforms, transform(transformation, errorMessage)]),
-
-  meets: (condition: ValidatorFn<string>, errorMessage?: string) =>
-    field([...transforms, checkCondition(condition, errorMessage)]),
-
-  validate: validateFn(transforms)
+  maxLength: (maxLength: WaitableValue<number>, errorMessage?: string) =>
+    field([...transforms, hasMaxLength(maxLength, errorMessage)])
 })

@@ -1,5 +1,14 @@
-import { castToString } from './helpers/cast'
-import { checkCondition } from './helpers/condition'
+import { field as stringField } from './string'
+import { field as genericField } from './generic'
+import { createValidate, Validatable } from './traits/validatable'
+import { isTheSame } from './traits/equalable'
+import {
+  transform,
+  Transformable,
+  TransformableToString
+} from './traits/transformable'
+import { Comparable, isNoneOf, isOneOf } from './traits/comparable'
+import { checkCondition, Conditionable } from './traits/conditionable'
 import {
   isGreaterThan,
   isGreaterThanOrEquals,
@@ -7,22 +16,13 @@ import {
   isLessThan,
   isLessThanOrEquals
 } from './helpers/numeric'
-import { transform } from './helpers/transform'
-import { validateFn } from './helpers/validate'
 
-import { field as stringField, StringField } from './string'
-import { field as genericField, GenericField } from './generic'
-
-export interface NumberField {
-  toString: (errorMessage?: string) => StringField
-
-  to: <Out>(
-    transformation: TransformFn<number, Out>,
-    errorMessage?: string
-  ) => GenericField<Out>
-  meets: (condition: ValidatorFn<number>, errorMessage?: string) => NumberField
-  validate: ValidateFn<number>
-
+export interface NumberField
+  extends Validatable<number>,
+    Comparable<number, NumberField>,
+    Conditionable<number, NumberField>,
+    Transformable<number>,
+    TransformableToString<number> {
   lessThan: (min: number, errorMessage?: string) => NumberField
   lessThanOrEquals: (min: number, errorMessage?: string) => NumberField
   greaterThan: (max: number, errorMessage?: string) => NumberField
@@ -30,21 +30,35 @@ export interface NumberField {
   integer: (errorMessage?: string) => NumberField
 }
 
-export const field = (
-  transforms: FieldTransformsArray<number>
-): NumberField => ({
-  // Casts
-  toString: (errorMessage?: string) =>
-    stringField([...transforms, castToString(errorMessage)]),
+export const field: Field<number, NumberField> = (transforms) => ({
+  // Comparable
+  oneOf: (values: WaitableValue<number[]>, errorMessage?: string) =>
+    field([...transforms, isOneOf(values, errorMessage)]),
 
-  // Shared
-  to: <Out>(transformation: TransformFn<number, Out>, errorMessage?: string) =>
-    genericField([...transforms, transform(transformation, errorMessage)]),
+  noneOf: (values: WaitableValue<number[]>, errorMessage?: string) =>
+    field([...transforms, isNoneOf(values, errorMessage)]),
 
-  meets: (condition: ValidatorFn<number>, errorMessage?: string) =>
+  equals: (value: WaitableValue<number>, errorMessage?: string) =>
+    field([...transforms, isTheSame(value, errorMessage)]),
+
+  // Transformable
+  toString: (
+    transformation: WaitableTransformFn<number, string> = (value) =>
+      String(value),
+    errorMessage?: string
+  ) => stringField([...transforms, transform(transformation, errorMessage)]),
+
+  to: <Out>(
+    transformation: WaitableTransformFn<number, Out>,
+    errorMessage?: string
+  ) => genericField([...transforms, transform(transformation, errorMessage)]),
+
+  // Conditionable
+  meets: (condition: WaitableConditionFn<number>, errorMessage?: string) =>
     field([...transforms, checkCondition(condition, errorMessage)]),
 
-  validate: validateFn(transforms),
+  // Validatable
+  validate: createValidate(transforms),
 
   // Number specific
   lessThan: (min: number, errorMessage?: string) =>

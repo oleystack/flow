@@ -1,6 +1,10 @@
-export const validateFn =
-  <T>(transforms: FieldTransformsArray<T>) =>
-  async (value: unknown): Promise<ValidateFnResult<T>> => {
+export interface Validatable<T> {
+  validate: FieldValidatorFn<T>
+}
+
+export const createValidate =
+  <T>(transforms: FieldWaitableTransformsArray<T>) =>
+  async (value: unknown): Promise<FieldValidatorResult<T>> => {
     const errors: string[] = []
 
     const finalValue = (await transforms.reduce(

@@ -1,39 +1,44 @@
-import { castToNumber, castToString } from './helpers/cast'
-import { checkCondition } from './helpers/condition'
-import { transform } from './helpers/transform'
-import { validateFn } from './helpers/validate'
+import { field as numberField } from './number'
+import { field as stringField } from './string'
+import { checkCondition, Conditionable } from './traits/conditionable'
+import {
+  transform,
+  Transformable,
+  TransformableToNumber,
+  TransformableToString
+} from './traits/transformable'
+import { createValidate, Validatable } from './traits/validatable'
 
-import { field as numberField, NumberField } from './number'
-import { field as stringField, StringField } from './string'
-
-export interface GenericField<T> {
-  toNumber: (errorMessage?: string) => NumberField
-  toString: (errorMessage?: string) => StringField
-
-  to: <Out>(
-    transformation: TransformFn<T, Out>,
-    errorMessage?: string
-  ) => GenericField<Out>
-  meets: (condition: ValidatorFn<T>, errorMessage?: string) => GenericField<T>
-  validate: ValidateFn<T>
-}
+export interface GenericField<T>
+  extends Validatable<T>,
+    Conditionable<T, GenericField<T>>,
+    Transformable<T>,
+    TransformableToString<T>,
+    TransformableToNumber<T> {}
 
 export const field = <T>(
-  transforms: FieldTransformsArray<T>
+  transforms: FieldWaitableTransformsArray<T>
 ): GenericField<T> => ({
-  // Casts
-  toNumber: (errorMessage?: string) =>
-    numberField([...transforms, castToNumber(errorMessage)]),
+  // Transformable
+  toNumber: (
+    transformation: WaitableTransformFn<T, number> = (value) => Number(value),
+    errorMessage?: string
+  ) => numberField([...transforms, transform(transformation, errorMessage)]),
 
-  toString: (errorMessage?: string) =>
-    stringField([...transforms, castToString(errorMessage)]),
+  toString: (
+    transformation: WaitableTransformFn<T, string> = (value) => String(value),
+    errorMessage?: string
+  ) => stringField([...transforms, transform(transformation, errorMessage)]),
 
-  // Shared
-  to: <Out>(transformation: TransformFn<T, Out>, errorMessage?: string) =>
-    field([...transforms, transform(transformation, errorMessage)]),
+  to: <Out>(
+    transformation: WaitableTransformFn<T, Out>,
+    errorMessage?: string
+  ) => field([...transforms, transform(transformation, errorMessage)]),
 
-  meets: (condition: ValidatorFn<T>, errorMessage?: string) =>
+  // Conditionable
+  meets: (condition: WaitableConditionFn<T>, errorMessage?: string) =>
     field([...transforms, checkCondition(condition, errorMessage)]),
 
-  validate: validateFn(transforms)
+  // Validatable
+  validate: createValidate(transforms)
 })

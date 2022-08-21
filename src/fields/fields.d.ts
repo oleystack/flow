@@ -1,14 +1,18 @@
-type ValidatorFn<T> = (value: T) => Promise<boolean> | boolean
+type WaitableValue<T> = (() => Promise<T>) | T
 
-type TransformFn<In, Out> = (value: In) => Promise<Out> | Out
+type WaitableTransformFn<In, Out> = (value: In) => Promise<Out> | Out
 
-type FieldTransformsArray<T> = [
-  ...TransformFn<unknown, unknown>[],
-  TransformFn<any, T>
-]
+type WaitableConditionFn<T> = (value: T) => Promise<boolean> | boolean
 
-type ValidateFnResult<T> =
+type FieldValidatorResult<T> =
   | { isValid: true; value: T; errors: [] }
   | { isValid: false; value: unknown; errors: string[] }
 
-type ValidateFn<T> = (value: unknown) => Promise<ValidateFnResult<T>>
+type FieldValidatorFn<T> = (value: unknown) => Promise<FieldValidatorResult<T>>
+
+type FieldWaitableTransformsArray<T> = [
+  ...WaitableTransformFn<unknown, unknown>[],
+  WaitableTransformFn<any, T> // eslint-disable-line @typescript-eslint/no-explicit-any
+]
+
+type Field<T, Api> = (transforms: FieldWaitableTransformsArray<T>) => Api

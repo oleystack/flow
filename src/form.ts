@@ -15,17 +15,18 @@ export const field = {
    * Create a string field.
    * Trimming is done by default.
    * @param errorMessage
-   * @returns
+   * @returns StringField
    */
   string: (errorMessage?: string) =>
     stringField([isString(errorMessage), trim(errorMessage)]),
 
   /**
    * Create a number field.
-   * NOTE: Because this library is strigthly focused on forms, we implicitly cast strings to numbers.
+   *
+   * NOTE: Because this library is strongly focused on forms, we implicitly cast strings to numbers.
    * String trimming is done by default.
    * @param errorMessage
-   * @returns
+   * @returns NumberField
    */
   number: (errorMessage?: string) =>
     numberField([
@@ -37,7 +38,7 @@ export const field = {
   /**
    * Create a boolean field.
    * @param errorMessage
-   * @returns
+   * @returns BooleanField
    */
   bool: (errorMessage?: string) => booleanField([castToBoolean(errorMessage)])
 }

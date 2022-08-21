@@ -1,18 +1,18 @@
 import { TransformationError, ValidationError } from '../../errors'
+import { getWaitableValue } from './waitable-value'
 
-export const trim =
-  (message?: string) =>
-  (value: string): string => {
-    try {
-      return value.trim()
-    } catch {
-      throw new TransformationError(message)
-    }
+export const trim = (message?: string) => async (value: string) => {
+  try {
+    return value.trim()
+  } catch {
+    throw new TransformationError(message)
   }
+}
 
 export const hasMinLength =
-  (minLength: number, message?: string) => (value: string) => {
-    if (value.length >= minLength) {
+  (minLength: WaitableValue<number>, message?: string) =>
+  async (value: string) => {
+    if (value.length >= (await getWaitableValue(minLength))) {
       return value
     }
 
@@ -20,8 +20,9 @@ export const hasMinLength =
   }
 
 export const hasMaxLength =
-  (maxLength: number, message?: string) => (value: string) => {
-    if (value.length <= maxLength) {
+  (maxLength: WaitableValue<number>, message?: string) =>
+  async (value: string) => {
+    if (value.length <= (await getWaitableValue(maxLength))) {
       return value
     }
 
@@ -29,8 +30,9 @@ export const hasMaxLength =
   }
 
 export const testRegExp =
-  (pattern: string | RegExp, message?: string) => (value: string) => {
-    if (RegExp(pattern).test(value)) {
+  (pattern: WaitableValue<string | RegExp>, message?: string) =>
+  async (value: string) => {
+    if (RegExp(await getWaitableValue(pattern)).test(value)) {
       return value
     }
 
@@ -52,8 +54,9 @@ export const isUrl = (message?: string) => (value: string) =>
   )(value)
 
 export const startsWith =
-  (prefix: string, message?: string) => (value: string) => {
-    if (value.startsWith(prefix)) {
+  (prefix: WaitableValue<string>, message?: string) =>
+  async (value: string) => {
+    if (value.startsWith(await getWaitableValue(prefix))) {
       return value
     }
 
@@ -61,8 +64,8 @@ export const startsWith =
   }
 
 export const endsWith =
-  (sufix: string, message?: string) => (value: string) => {
-    if (value.endsWith(sufix)) {
+  (sufix: WaitableValue<string>, message?: string) => async (value: string) => {
+    if (value.endsWith(await getWaitableValue(sufix))) {
       return value
     }
 
