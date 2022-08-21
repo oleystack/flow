@@ -109,8 +109,3 @@ describe('Field initialization', () => {
     })
   })
 })
-
-
-
-
-field.string().to(() => 123).to(() =? )
