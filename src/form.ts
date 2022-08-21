@@ -1,14 +1,18 @@
 import {
   castToBoolean,
-  castToNumber,
   isString,
-  isStringOrNumber
+  safeCastToNumber
 } from './fields/helpers/cast'
 import { trim } from './fields/helpers/text'
 
 import { field as numberField } from './fields/number'
 import { field as booleanField } from './fields/boolean'
 import { field as stringField } from './fields/string'
+
+// Todo: deafult'able and optional'able
+// Todo: date (js), before, after, ...
+// Todo: messages interpolation (given, expected) => `${given} is not a valid ${expected}`
+// Todo: removing field from array will seamlessly remove it from form
 
 export const field = {
   /**
@@ -18,7 +22,7 @@ export const field = {
    * @returns StringField
    */
   string: (errorMessage?: string) =>
-    stringField([isString(errorMessage), trim(errorMessage)]),
+    stringField([isString(errorMessage), trim()]),
 
   /**
    * Create a number field.
@@ -30,9 +34,8 @@ export const field = {
    */
   number: (errorMessage?: string) =>
     numberField([
-      isStringOrNumber(errorMessage),
       // Trimming is not necessary because we are casting to number.
-      castToNumber(errorMessage)
+      safeCastToNumber(errorMessage)
     ]),
 
   /**

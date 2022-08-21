@@ -18,8 +18,8 @@
     "declaration": true,
     "declarationMap": true,
     "baseUrl": ".",
-    "types": ["node"]
+    "types": ["jest", "node"]
   },
-  "include": ["src", "__tests__"],
+  "include": ["src"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }

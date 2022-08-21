@@ -1,4 +1,3 @@
-import { castToNumber } from './helpers/cast'
 import {
   endsWith,
   hasMaxLength,
@@ -9,24 +8,17 @@ import {
   testRegExp
 } from './helpers/text'
 
-import { field as numberField } from './number'
-import { field as genericField } from './generic'
 import { createValidate, Validatable } from './traits/validatable'
 import { Comparable, isNoneOf, isOneOf } from './traits/comparable'
 import { checkCondition, Conditionable } from './traits/conditionable'
-import {
-  transform,
-  Transformable,
-  TransformableToNumber
-} from './traits/transformable'
+import { createTransform, Transformable } from './traits/transformable'
 import { isTheSame } from './traits/equalable'
 
 export interface StringField
   extends Validatable<string>,
     Comparable<string, StringField>,
     Conditionable<string, StringField>,
-    Transformable<string>,
-    TransformableToNumber<string> {
+    Transformable<string> {
   regex: (
     pattern: WaitableValue<string | RegExp>,
     errorMessage?: string
@@ -49,6 +41,8 @@ export interface StringField
 }
 
 export const field: Field<string, StringField> = (transforms) => ({
+  __type: 'string',
+
   // Comparable
   oneOf: (values: WaitableValue<string[]>, errorMessage?: string) =>
     field([...transforms, isOneOf(values, errorMessage)]),
@@ -60,23 +54,14 @@ export const field: Field<string, StringField> = (transforms) => ({
     field([...transforms, isTheSame(value, errorMessage)]),
 
   // Transformable
-  toNumber: (
-    transformation: WaitableTransformFn<string, number> = (value) =>
-      Number(value),
-    errorMessage?: string
-  ) => numberField([...transforms, transform(transformation, errorMessage)]),
-
-  to: <Out>(
-    transformation: WaitableTransformFn<string, Out>,
-    errorMessage?: string
-  ) => genericField([...transforms, transform(transformation, errorMessage)]),
+  ...createTransform(transforms),
 
   // Conditionable
   meets: (condition: WaitableConditionFn<string>, errorMessage?: string) =>
     field([...transforms, checkCondition(condition, errorMessage)]),
 
   // Validatable
-  validate: createValidate(transforms),
+  ...createValidate(transforms),
 
   // String specific
   regex: (pattern: WaitableValue<string | RegExp>, errorMessage?: string) =>

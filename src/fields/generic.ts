@@ -1,44 +1,28 @@
-import { field as numberField } from './number'
-import { field as stringField } from './string'
 import { checkCondition, Conditionable } from './traits/conditionable'
-import {
-  transform,
-  Transformable,
-  TransformableToNumber,
-  TransformableToString
-} from './traits/transformable'
+import { createTransform, Transformable } from './traits/transformable'
 import { createValidate, Validatable } from './traits/validatable'
 
 export interface GenericField<T>
   extends Validatable<T>,
     Conditionable<T, GenericField<T>>,
-    Transformable<T>,
-    TransformableToString<T>,
-    TransformableToNumber<T> {}
+    Transformable<T> {}
 
-export const field = <T>(
+type GenericFieldSignature = <T>(
   transforms: FieldWaitableTransformsArray<T>
-): GenericField<T> => ({
+) => GenericField<T>
+
+export const field: GenericFieldSignature = <T>(
+  transforms: FieldWaitableTransformsArray<T>
+) => ({
+  __type: 'generic',
+
   // Transformable
-  toNumber: (
-    transformation: WaitableTransformFn<T, number> = (value) => Number(value),
-    errorMessage?: string
-  ) => numberField([...transforms, transform(transformation, errorMessage)]),
-
-  toString: (
-    transformation: WaitableTransformFn<T, string> = (value) => String(value),
-    errorMessage?: string
-  ) => stringField([...transforms, transform(transformation, errorMessage)]),
-
-  to: <Out>(
-    transformation: WaitableTransformFn<T, Out>,
-    errorMessage?: string
-  ) => field([...transforms, transform(transformation, errorMessage)]),
+  ...createTransform(transforms),
 
   // Conditionable
   meets: (condition: WaitableConditionFn<T>, errorMessage?: string) =>
     field([...transforms, checkCondition(condition, errorMessage)]),
 
   // Validatable
-  validate: createValidate(transforms)
+  ...createValidate(transforms)
 })

@@ -1,4 +1,4 @@
-import { ValidationError } from 'src/errors'
+import { ValidationError } from '../../errors'
 import { getWaitableValue } from '../helpers/waitable-value'
 
 export interface Equalable<T, FieldApi> {

@@ -5,7 +5,7 @@ type WaitableTransformFn<In, Out> = (value: In) => Promise<Out> | Out
 type WaitableConditionFn<T> = (value: T) => Promise<boolean> | boolean
 
 type FieldValidatorResult<T> =
-  | { isValid: true; value: T; errors: [] }
+  | { isValid: true; value: T; errors: string[] }
   | { isValid: false; value: unknown; errors: string[] }
 
 type FieldValidatorFn<T> = (value: unknown) => Promise<FieldValidatorResult<T>>

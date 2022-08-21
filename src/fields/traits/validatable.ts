@@ -2,31 +2,35 @@ export interface Validatable<T> {
   validate: FieldValidatorFn<T>
 }
 
-export const createValidate =
-  <T>(transforms: FieldWaitableTransformsArray<T>) =>
-  async (value: unknown): Promise<FieldValidatorResult<T>> => {
+export const createValidate = <T>(
+  transforms: FieldWaitableTransformsArray<T>
+) => ({
+  validate: async (value: unknown): Promise<FieldValidatorResult<T>> => {
+    let isValid = true
     const errors: string[] = []
 
     const finalValue = (await transforms.reduce(
       async (currentValue, transform) => {
         try {
-          return await transform(currentValue)
+          return await transform(await currentValue)
         } catch (error) {
-          if (error instanceof Error) {
+          if (error instanceof Error && error.message) {
             errors.push(error.message)
           }
 
-          if (typeof error === 'string') {
+          if (typeof error === 'string' && error.length > 0) {
             errors.push(error)
           }
 
-          return currentValue
+          isValid = false
+
+          return await currentValue
         }
       },
       value
     )) as T
 
-    const isValid = errors.length === 0
+    // Maybe returning the whole pipe will be a good idea.
 
     if (isValid) {
       return { isValid: true, value: finalValue, errors: [] }
@@ -38,3 +42,4 @@ export const createValidate =
       value
     }
   }
+})
