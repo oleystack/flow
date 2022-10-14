@@ -1,9 +1,9 @@
 {
-  "name": "@bit-about/form",
-  "description": "Tiny and powerfull React library for forms.",
+  "name": "@bit-about/flow",
+  "description": "Powerfull extensible pipe architecture.",
   "author": "Gareneye",
   "license": "MIT",
-  "repository": "github:bit-about/form",
+  "repository": "github:bit-about/flow",
   "private": true,
   "version": "0.0.1",
   "type": "module",
@@ -27,23 +27,18 @@
   },
   "scripts": {
     "dev": "vite",
-    "build": "run-p build:*",
-    "build:scripts": "vite build",
-    "build:types": "tsc --emitDeclarationOnly",
+    "build": "vite build",
     "preview": "vite preview",
     "test": "vitest",
     "lint": "eslint --fix src/**",
     "format": "prettier src/** --write"
   },
   "dependencies": {
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "install": "^0.13.0",
+    "npm": "^8.19.2"
   },
   "devDependencies": {
-    "@testing-library/jest-dom": "^5.16.5",
-    "@testing-library/react": "^13.3.0",
-    "@testing-library/react-hooks": "^8.0.1",
-    "@testing-library/user-event": "^14.4.3",
+    "@types/jest": "^29.1.2",
     "@types/node": "^18.7.8",
     "@types/react": "^18.0.17",
     "@types/react-dom": "^18.0.6",
@@ -53,11 +48,15 @@
     "eslint": "^8.22.0",
     "eslint-config-prettier": "^8.5.0",
     "eslint-plugin-react": "^7.30.1",
+    "jest": "^29.2.0",
     "jsdom": "^20.0.0",
     "npm-run-all": "^4.1.5",
     "prettier": "^2.7.1",
-    "typescript": "^4.7.4",
+    "rollup-plugin-typescript2": "^0.34.1",
+    "tslib": "^2.4.0",
+    "typescript": "^4.8.4",
     "vite": "^3.0.7",
+    "vite-plugin-dts": "^1.6.6",
     "vite-plugin-eslint": "^1.8.1",
     "vitest": "^0.22.1"
   }

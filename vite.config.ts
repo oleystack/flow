@@ -3,21 +3,16 @@
 
 import { defineConfig } from 'vite'
 import { resolve } from 'path'
-import { peerDependencies, dependencies } from './package.json'
-import react from '@vitejs/plugin-react'
+
 import eslintPlugin from 'vite-plugin-eslint'
+import dts from 'vite-plugin-dts'
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  plugins: [
-    react({
-      jsxRuntime: 'classic'
-    }),
-    eslintPlugin()
-  ],
+  plugins: [eslintPlugin(), dts()],
   test: {
     globals: true,
-    environment: 'jsdom'
+    include: ['__tests__/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}']
   },
   build: {
     lib: {
@@ -26,9 +21,7 @@ export default defineConfig({
       fileName: (ext) => `index.${ext}.js`
       // for UMD name: 'GlobalName'
     },
-    rollupOptions: {
-      external: [...Object.keys(peerDependencies), ...Object.keys(dependencies)]
-    },
+    rollupOptions: {},
     target: 'esnext',
     sourcemap: true
   }
