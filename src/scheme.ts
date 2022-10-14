@@ -1,6 +1,6 @@
-type Constructor<T> = <Args>(...args: Args[]) => T
-type Transformation<In, Out> = (value: In) => Out
-type Pipe<T> = [...Transformation<any, any>[], Transformation<any, T>] | []
+export type Constructor<T> = <Args>(...args: Args[]) => T
+export type Transformation<In, Out> = (value: In) => Promise<Out> | Out
+export type Pipe<T> = [...Transformation<any, any>[], Transformation<any, T>]
 
 type FieldGetter<T> = () => {
   __flow_type__: T
@@ -75,7 +75,7 @@ const extendScheme = <Entries extends Entry<any, any>>(entries: Entries[]) => {
 
   const getField = <T>(
     constructor: Constructor<T>,
-    pipe: Pipe<T> = []
+    pipe: Pipe<T> = [] as unknown as Pipe<T>
   ): BindApi<T, Creators> => {
     const transform = <Out>(
       constructor: Constructor<Out>,
@@ -108,7 +108,9 @@ const extendScheme = <Entries extends Entry<any, any>>(entries: Entries[]) => {
         pipe: Pipe<T>
       ) => Api
     ) => {
-      const parent = fields.get(constructor)?.(getField as any, []) ?? {}
+      const parent =
+        fields.get(constructor)?.(getField as any, [] as unknown as Pipe<T>) ??
+        {}
 
       const bindApiCreator: Creator<T, Api> = (_fields, _pipe) =>
         apiCreator(parent, _fields, _pipe)
