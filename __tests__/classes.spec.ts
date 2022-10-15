@@ -77,3 +77,52 @@ describe('Constructor Multiselect usage', () => {
     ).toEqual(new Multiselect(['a', 'b']))
   })
 })
+
+describe('Multiselect with Set usage', () => {
+  it('Can be created', () => {
+    const scheme = createScheme().with(
+      Set<string>,
+      (_parent, fields, pipe) => ({
+        init: () =>
+          fields(Set<string>, [...pipe, () => new Set(['a', 'b', 'c'])]),
+        get: () =>
+          pipe.reduce(
+            (currentValue, transformation) => transformation(currentValue),
+            []
+          )
+      })
+    )
+
+    expect(
+      scheme
+        .getField(Set<string>)
+        .init()
+        .transform(() => new Set(['a', 'b']))
+        .get()
+    ).toEqual(new Set(['a', 'b']))
+  })
+})
+
+describe('Multiselect with Array usage', () => {
+  it('Can be created', () => {
+    const scheme = createScheme().with(
+      Array<string>,
+      (_parent, fields, pipe) => ({
+        init: () => fields(Array<string>, [...pipe, () => ['a', 'b', 'c']]),
+        get: () =>
+          pipe.reduce(
+            (currentValue, transformation) => transformation(currentValue),
+            []
+          )
+      })
+    )
+
+    expect(
+      scheme
+        .getField(Array<string>)
+        .init()
+        .transform(() => ['a', 'b'])
+        .get()
+    ).toEqual(['a', 'b'])
+  })
+})
