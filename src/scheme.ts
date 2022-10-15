@@ -7,7 +7,7 @@ type GetPrimitive<C extends Constructor> = C extends (...args: any[]) => infer T
 
 export type Transformation<In, Out> = (value: In) => Promise<Out> | Out
 export type Pipe<In, Out> = [
-  ...Transformation<In, In>[],
+  ...Transformation<In, In>[], // never change anything here to any/unknown :)
   Transformation<In, Out>
 ]
 
@@ -123,7 +123,7 @@ const extendScheme = <Entries extends Entry<any, any>>(entries: Entries[]) => {
             GetPrimitive<C1>
           >)
 
-      return getField(thisConstructor, [...pipe, thisTransformation] as any)
+      return getField(thisConstructor, [...pipe, thisTransformation])
     }
 
     // return default API

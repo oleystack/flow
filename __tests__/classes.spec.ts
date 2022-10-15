@@ -1,20 +1,20 @@
 import { createScheme } from '../src/scheme'
 
-class MyRectangle {
-  private height: number
-  private width: number
+describe('Class Rectangle usage', () => {
+  class MyRectangle {
+    private height: number
+    private width: number
 
-  constructor(height, width) {
-    this.height = height
-    this.width = width
+    constructor(height, width) {
+      this.height = height
+      this.width = width
+    }
+
+    get area() {
+      return this.width * this.height
+    }
   }
 
-  get area() {
-    return this.width * this.height
-  }
-}
-
-describe('Classes usage', () => {
   it('Can be created', () => {
     const scheme = createScheme()
       .with(Number, (_parent, fields, pipe) => ({
@@ -39,5 +39,41 @@ describe('Classes usage', () => {
         .toArea()
         .evaluate(2)
     ).toEqual(25)
+  })
+})
+
+describe('Constructor Multiselect usage', () => {
+  class Multiselect {
+    private options: string[]
+
+    constructor(options: string[]) {
+      this.options = options
+    }
+  }
+
+  it('Can be created', () => {
+    const scheme = createScheme().with(
+      Multiselect,
+      (_parent, fields, pipe) => ({
+        init: () =>
+          fields(Multiselect, [
+            ...pipe,
+            () => new Multiselect(['a', 'b', 'c'])
+          ]),
+        get: () =>
+          pipe.reduce(
+            (currentValue, transformation) => transformation(currentValue),
+            []
+          )
+      })
+    )
+
+    expect(
+      scheme
+        .getField(Multiselect)
+        .init()
+        .transform(() => new Multiselect(['a', 'b']))
+        .get()
+    ).toEqual(new Multiselect(['a', 'b']))
   })
 })
