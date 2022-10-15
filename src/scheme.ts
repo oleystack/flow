@@ -38,8 +38,6 @@ type Entry<C extends Constructor, Api extends Record<string, any>> = [
   Creator<GetPrimitive<C>, Api>
 ]
 
-// todo
-
 type BindCreatorApiArray<
   C extends Constructor,
   Api extends Array<any>,
@@ -74,8 +72,6 @@ type BindCreatorApi<C1 extends Constructor, Api, Creators> =
     ? BindCreatorApiArray<C1, Api, Creators>
     : // 5. Otherwise return as it is
       Api
-
-//
 
 const extendScheme = <Entries extends Entry<any, any>>(entries: Entries[]) => {
   const fields = new Map<any, Creator<any, any>>(entries)
