@@ -22,8 +22,7 @@ describe('Classes usage', () => {
           fields(Number, [...pipe, (value) => value ** exponent]),
         evaluate: (value: number) =>
           pipe.reduce(
-            (currentValue, transformation) =>
-              transformation(currentValue) as any,
+            (currentValue, transformation) => transformation(currentValue),
             value
           )
       }))

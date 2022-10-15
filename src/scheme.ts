@@ -9,8 +9,7 @@ export type GetPrimitive<C extends Constructor> = C extends (
 
 export type Transformation<In, Out> = (value: In) => Promise<Out> | Out
 export type Pipe<In, Out> = [
-  ...Transformation<unknown, unknown>[],
-  Transformation<unknown, In>,
+  ...Transformation<In, In>[],
   Transformation<In, Out>
 ]
 
@@ -30,7 +29,7 @@ type Creator<C1 extends Constructor, Api extends Record<string, any>> = (
     constructor: C2,
     pipe: Pipe<GetPrimitive<C1>, GetPrimitive<C2>>
   ) => FieldGetter<C2>,
-  pipe: Pipe<unknown, GetPrimitive<C1>>
+  pipe: Pipe<any, GetPrimitive<C1>>
 ) => Api
 
 type Entry<C extends Constructor, Api extends Record<string, any>> = [
@@ -97,7 +96,7 @@ const extendScheme = <Entries extends Entry<any, any>>(entries: Entries[]) => {
    */
   const getField = <C1 extends Constructor>(
     constructor: C1,
-    pipe = [] as unknown as Pipe<unknown, GetPrimitive<C1>>
+    pipe = [] as unknown as Pipe<any, GetPrimitive<C1>>
   ): BindApi<C1, Creators> => {
     /**
      * Main transform function
@@ -152,13 +151,13 @@ const extendScheme = <Entries extends Entry<any, any>>(entries: Entries[]) => {
         constructor: C2,
         pipe: Pipe<GetPrimitive<C1>, GetPrimitive<C2>>
       ) => FieldGetter<C2>,
-      pipe: Pipe<unknown, GetPrimitive<C1>>
+      pipe: Pipe<any, GetPrimitive<C1>>
     ) => Api
   ) => {
     const parent =
       fields.get(constructor)?.(
         getField as any,
-        [] as unknown as Pipe<unknown, GetPrimitive<C1>>
+        [] as unknown as Pipe<any, GetPrimitive<C1>>
       ) ?? {}
 
     const bindApiCreator: Creator<C1, Api> = (_fields, _pipe) =>
