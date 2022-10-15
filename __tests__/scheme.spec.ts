@@ -52,6 +52,32 @@ describe('Basic usage', () => {
     })
   })
 
+  it('Can transform', () => {
+    const scheme = createScheme().with(Number, (_parent, _fields, pipe) => ({
+      __type__: 'number',
+      evaluate: (value: number) =>
+        pipe.reduce(
+          (currentValue, transformation) => transformation(currentValue) as any,
+          value
+        )
+    }))
+
+    expect(scheme.getField(Number)).toEqual({
+      transform: expect.any(Function),
+      __type__: 'number',
+      evaluate: expect.any(Function)
+    })
+
+    expect(
+      scheme
+        .getField(Number)
+        .transform((x) => x + 1)
+        .transform((x) => x + 1)
+        .transform((x) => x + 1)
+        .evaluate(0)
+    ).toEqual(3)
+  })
+
   it('Can transform to another field', () => {
     const scheme = createScheme()
       .with(Number, () => ({

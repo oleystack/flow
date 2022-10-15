@@ -22,7 +22,8 @@ describe('Classes usage', () => {
           fields(Number, [...pipe, (value) => value ** exponent]),
         evaluate: (value: number) =>
           pipe.reduce(
-            (value, transformation) => transformation(value) as any,
+            (currentValue, transformation) =>
+              transformation(currentValue) as any,
             value
           )
       }))
@@ -34,9 +35,10 @@ describe('Classes usage', () => {
       scheme
         .getField(Number)
         .pow(2)
+        .transform((value) => value + 1)
         .transform(MyRectangle, (value) => new MyRectangle(value, value))
         .toArea()
         .evaluate(2)
-    ).toBe(16)
+    ).toEqual(25)
   })
 })

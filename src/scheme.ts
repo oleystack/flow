@@ -47,11 +47,17 @@ type BindCreatorApiArray<
   : []
 
 type CreatorTransformer<C1 extends Constructor, Creators> = {
-  transform: <C2 extends Constructor>(
+  transform<C2 extends Constructor>(
     constructor: C2,
     transformation: Transformation<GetPrimitive<C1>, GetPrimitive<C2>>
-  ) => Extract<Creators, Creator<C2, any>> extends Creator<C2, infer Api2>
+  ): Extract<Creators, Creator<C2, any>> extends Creator<C2, infer Api2>
     ? BindCreatorApi<C2, Api2, Creators> & CreatorTransformer<C2, Creators>
+    : {}
+
+  transform(
+    transformation: Transformation<GetPrimitive<C1>, GetPrimitive<C1>>
+  ): Extract<Creators, Creator<C1, any>> extends Creator<C1, infer Api2>
+    ? BindCreatorApi<C1, Api2, Creators> & CreatorTransformer<C1, Creators>
     : {}
 }
 
@@ -92,21 +98,30 @@ const extendScheme = <Entries extends Entry<any, any>>(entries: Entries[]) => {
     pipe = [] as unknown as Pipe<unknown, GetPrimitive<C1>>
   ): BindApi<C1, Creators> => {
     const transform = <C2 extends Constructor>(
-      constructor: C2,
-      transformation: Transformation<GetPrimitive<C1>, GetPrimitive<C2>>
+      constructorOrTransformation:
+        | C2
+        | Transformation<GetPrimitive<C1>, GetPrimitive<C1>>,
+      transformation?: Transformation<GetPrimitive<C1>, GetPrimitive<C2>>
     ) => {
-      return {
-        transform,
-        ...(fields.get(constructor)?.(
-          getField as any,
-          [...pipe, transformation] as any
-        ) ?? {})
-      }
+      const hasConstructor = transformation !== undefined
+
+      const thisConstructor = hasConstructor
+        ? (constructorOrTransformation as C2)
+        : constructor
+
+      const thisTransformation = hasConstructor
+        ? transformation
+        : (constructorOrTransformation as Transformation<
+            GetPrimitive<C1>,
+            GetPrimitive<C1>
+          >)
+
+      return getField(thisConstructor, [...pipe, thisTransformation] as any)
     }
 
     return {
-      transform,
-      ...(fields.get(constructor)?.(getField as any, pipe) ?? {})
+      ...fields.get(constructor)?.(getField as any, pipe),
+      transform
     }
   }
 
