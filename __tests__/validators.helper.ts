@@ -42,7 +42,7 @@ export const increment = (value: number): number => {
 
 // For all
 
-export const toNumber = (value: any): number => {
+export const toNumber = <In>(value: In): number => {
   const result = Number(value)
 
   if (Number.isNaN(result)) {
@@ -57,7 +57,7 @@ type ValidationResult<T> =
   | { isValid: false; error: string }
 
 export const validate = async <T>(
-  pipe: Pipe<T>,
+  pipe: Pipe<unknown, T>,
   value: any
 ): Promise<ValidationResult<T>> => {
   try {

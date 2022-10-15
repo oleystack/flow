@@ -15,7 +15,8 @@ const scheme = createScheme()
     validate: (value: any) => validate(pipe, value)
   }))
   .with(String, (_parent, fields, pipe) => ({
-    toNumber: () => fields(Number, [...pipe, toNumber]),
+    toNumber: () =>
+      fields(Number, [...pipe, toNumber as (value: string) => number]),
     isEmpty: () => fields(String, [...pipe, isEmpty]),
     isShorterThan: (maxLength: number) =>
       fields(String, [...pipe, isShorterThan(maxLength)]),
