@@ -46,19 +46,22 @@ type BindCreatorApiArray<
   ? [BindCreatorApi<C, A, Creators>, ...BindCreatorApiArray<C, Rest, Creators>]
   : []
 
+type BindApi<C extends Constructor, Creators> = Extract<
+  Creators,
+  Creator<C, any>
+> extends Creator<C, infer Api>
+  ? BindCreatorApi<C, Api, Creators> & CreatorTransformer<C, Creators>
+  : BindCreatorApi<C, {}, Creators> & CreatorTransformer<C, Creators>
+
 type CreatorTransformer<C1 extends Constructor, Creators> = {
   transform<C2 extends Constructor>(
     constructor: C2,
     transformation: Transformation<GetPrimitive<C1>, GetPrimitive<C2>>
-  ): Extract<Creators, Creator<C2, any>> extends Creator<C2, infer Api2>
-    ? BindCreatorApi<C2, Api2, Creators> & CreatorTransformer<C2, Creators>
-    : {}
+  ): BindApi<C2, Creators>
 
   transform(
     transformation: Transformation<GetPrimitive<C1>, GetPrimitive<C1>>
-  ): Extract<Creators, Creator<C1, any>> extends Creator<C1, infer Api2>
-    ? BindCreatorApi<C1, Api2, Creators> & CreatorTransformer<C1, Creators>
-    : {}
+  ): BindApi<C1, Creators>
 }
 
 type BindCreatorApi<C1 extends Constructor, Api, Creators> =
@@ -86,18 +89,25 @@ const extendScheme = <Entries extends Entry<any, any>>(entries: Entries[]) => {
     ? Creator<C, Api>
     : never
 
-  type BindApi<C extends Constructor, Creators> = Extract<
-    Creators,
-    Creator<C, any>
-  > extends Creator<C, infer Api>
-    ? BindCreatorApi<C, Api, Creators> & CreatorTransformer<C, Creators>
-    : BindCreatorApi<C, {}, Creators> & CreatorTransformer<C, Creators>
-
+  /**
+   * Field getter
+   * @param constructor
+   * @param pipe
+   * @returns API
+   */
   const getField = <C1 extends Constructor>(
     constructor: C1,
     pipe = [] as unknown as Pipe<unknown, GetPrimitive<C1>>
   ): BindApi<C1, Creators> => {
-    const transform = <C2 extends Constructor>(
+    /**
+     * Main transform function
+     * @param constructorOrTransformation
+     * @param transformation
+     * @returns field API
+     */
+    const transform: CreatorTransformer<C1, Creators>['transform'] = <
+      C2 extends Constructor
+    >(
       constructorOrTransformation:
         | C2
         | Transformation<GetPrimitive<C1>, GetPrimitive<C1>>,
@@ -119,43 +129,53 @@ const extendScheme = <Entries extends Entry<any, any>>(entries: Entries[]) => {
       return getField(thisConstructor, [...pipe, thisTransformation] as any)
     }
 
+    // return default API
     return {
       ...fields.get(constructor)?.(getField as any, pipe),
       transform
     }
   }
 
+  /**
+   * Field adder
+   * @param constructor
+   * @param apiCreator (parent, fields, pipe) => api
+   * @returns extended scheme
+   */
+  const addField = <C1 extends Constructor, Api extends Record<string, any>>(
+    constructor: C1,
+    apiCreator: (
+      parent: Extract<Creators, Creator<C1, any>> extends never
+        ? {}
+        : GetParent<C1, Creators>,
+      fields: <C2 extends Constructor>(
+        constructor: C2,
+        pipe: Pipe<GetPrimitive<C1>, GetPrimitive<C2>>
+      ) => FieldGetter<C2>,
+      pipe: Pipe<unknown, GetPrimitive<C1>>
+    ) => Api
+  ) => {
+    const parent =
+      fields.get(constructor)?.(
+        getField as any,
+        [] as unknown as Pipe<unknown, GetPrimitive<C1>>
+      ) ?? {}
+
+    const bindApiCreator: Creator<C1, Api> = (_fields, _pipe) =>
+      apiCreator(parent, _fields, _pipe)
+
+    fields.set(constructor, bindApiCreator)
+    const newEntries = Array.from(fields)
+
+    return extendScheme<Exclude<Entries, Entry<C1, any>> | Entry<C1, Api>>(
+      newEntries
+    )
+  }
+
+  // expose extendScheme's API
   return {
     getField,
-    with: <C1 extends Constructor, Api extends Record<string, any>>(
-      constructor: C1,
-      apiCreator: (
-        parent: Extract<Creators, Creator<C1, any>> extends never
-          ? {}
-          : GetParent<C1, Creators>,
-        fields: <C2 extends Constructor>(
-          constructor: C2,
-          pipe: Pipe<GetPrimitive<C1>, GetPrimitive<C2>>
-        ) => FieldGetter<C2>,
-        pipe: Pipe<unknown, GetPrimitive<C1>>
-      ) => Api
-    ) => {
-      const parent =
-        fields.get(constructor)?.(
-          getField as any,
-          [] as unknown as Pipe<unknown, GetPrimitive<C1>>
-        ) ?? {}
-
-      const bindApiCreator: Creator<C1, Api> = (_fields, _pipe) =>
-        apiCreator(parent, _fields, _pipe)
-
-      fields.set(constructor, bindApiCreator)
-      const newEntries = Array.from(fields)
-
-      return extendScheme<Exclude<Entries, Entry<C1, any>> | Entry<C1, Api>>(
-        newEntries
-      )
-    }
+    with: addField
   }
 }
 
