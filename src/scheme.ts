@@ -1,7 +1,5 @@
 export type Constructor = new (...args: any[]) => any
-export type GetPrimitive<C extends Constructor> = C extends (
-  ...args: any[]
-) => infer T
+type GetPrimitive<C extends Constructor> = C extends (...args: any[]) => infer T
   ? T
   : C extends new (...args: any[]) => infer T
   ? T
