@@ -63,7 +63,7 @@ describe('Constructor Multiselect usage', () => {
         get: () =>
           pipe.reduce(
             (currentValue, transformation) => transformation(currentValue),
-            []
+            new Multiselect([])
           )
       })
     )
@@ -88,7 +88,7 @@ describe('Multiselect with Set usage', () => {
         get: () =>
           pipe.reduce(
             (currentValue, transformation) => transformation(currentValue),
-            []
+            new Set()
           )
       })
     )
