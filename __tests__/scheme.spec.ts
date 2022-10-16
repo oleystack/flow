@@ -14,7 +14,8 @@ describe('Basic usage', () => {
 
     // Before declaration
     expect(scheme.getField(Number)).toEqual({
-      transform: expect.any(Function)
+      transform: expect.any(Function),
+      getResource: expect.any(Function)
     })
 
     scheme = scheme.with(Number, () => ({
@@ -24,6 +25,7 @@ describe('Basic usage', () => {
     // After declaration
     expect(scheme.getField(Number)).toEqual({
       transform: expect.any(Function),
+      getResource: expect.any(Function),
       __type__: 'number'
     })
   })
@@ -36,6 +38,7 @@ describe('Basic usage', () => {
     // Before declaration
     expect(scheme.getField(Number)).toEqual({
       transform: expect.any(Function),
+      getResource: expect.any(Function),
       __type__: 'number'
     })
 
@@ -47,6 +50,7 @@ describe('Basic usage', () => {
     // After declaration
     expect(scheme.getField(Number)).toEqual({
       transform: expect.any(Function),
+      getResource: expect.any(Function),
       __type__: 'number',
       __extra_field__: true
     })
@@ -64,6 +68,7 @@ describe('Basic usage', () => {
 
     expect(scheme.getField(Number)).toEqual({
       transform: expect.any(Function),
+      getResource: expect.any(Function),
       __type__: 'number',
       evaluate: expect.any(Function)
     })
@@ -89,11 +94,13 @@ describe('Basic usage', () => {
 
     expect(scheme.getField(Number)).toEqual({
       transform: expect.any(Function),
+      getResource: expect.any(Function),
       __type__: 'number'
     })
 
     expect(scheme.getField(String)).toEqual({
       transform: expect.any(Function),
+      getResource: expect.any(Function),
       __type__: 'string'
     })
 
@@ -101,12 +108,14 @@ describe('Basic usage', () => {
 
     expect(scheme.getField(Number).transform(String, (x) => `${x}`)).toEqual({
       transform: expect.any(Function),
+      getResource: expect.any(Function),
       __type__: 'string'
     })
 
     expect(scheme.getField(String).transform(Number, (x) => Number(x))).toEqual(
       {
         transform: expect.any(Function),
+        getResource: expect.any(Function),
         __type__: 'number'
       }
     )
@@ -117,9 +126,17 @@ describe('Basic usage', () => {
       scheme
         .getField(Number)
         .transform(String, (x) => `${x}`)
+        .transform(Number, (x) => Number(x)).__type__
+    ).toEqual('number')
+
+    expect(
+      scheme
+        .getField(Number)
+        .transform(String, (x) => `${x}`)
         .transform(Number, (x) => Number(x))
     ).toEqual({
       transform: expect.any(Function),
+      getResource: expect.any(Function),
       __type__: 'number'
     })
   })
@@ -136,6 +153,7 @@ describe('Basic usage', () => {
 
     expect(scheme.getField(Number)).toEqual({
       transform: expect.any(Function),
+      getResource: expect.any(Function),
       __type__: 'number',
       __own_fnc__: expect.any(Function)
     })
@@ -312,5 +330,65 @@ describe('Pipe usage', () => {
     expect(scheme.getField(Number).__in_arr__[5][1]().__type__).toEqual(
       'string'
     )
+  })
+})
+
+describe('Resource usage', () => {
+  it('Can be created', () => {
+    enum Type {
+      INPUT,
+      SELECT
+    }
+    type Resource = {
+      type: Type.INPUT | Type.SELECT
+      initValue: string
+    }
+
+    const scheme = createScheme<Resource>()
+      .with(String, (parent, fields, pipe, resource) => ({
+        ...parent,
+
+        concat: (value: string) =>
+          fields(String, pipe, {
+            ...resource,
+            initValue: resource.initValue + value
+          })
+      }))
+      .with(Number, (parent, fields, pipe, resource) => ({
+        ...parent,
+
+        addNumber: (value: number) =>
+          fields(Number, pipe, {
+            ...resource,
+            initValue: resource.initValue + `${value}`
+          })
+      }))
+
+    expect(
+      scheme
+        .getField(String, [], { type: Type.INPUT, initValue: '' })
+        .concat('a')
+        .concat('b')
+        .concat('c')
+        .getResource()
+    ).toEqual({ type: Type.INPUT, initValue: 'abc' })
+
+    const field = scheme
+      .getField(String, [], { type: Type.INPUT, initValue: '' })
+      .concat('a')
+      .concat('b')
+      .concat('c')
+      .transform(Number, (value) => Number(value))
+      .addNumber(1)
+      .addNumber(2)
+      .addNumber(3)
+      .transform(String, (value) => String(value))
+
+    expect(field.getResource()).toEqual({
+      type: Type.INPUT,
+      initValue: 'abc123'
+    })
+
+    // type FieldResourceType = GetResourceType<typeof field>
   })
 })
