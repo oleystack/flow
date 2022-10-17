@@ -212,14 +212,13 @@ const extendScheme = <Entries extends Entry<any, any>, Resource>(
       return getField(thisConstructor, [...pipe, thisTransformation], resource)
     }
 
+    // Return field API
     return new Proxy(
-      {
-        ...fields.get(constructor)?.(
-          getField as any,
-          pipe as Pipe<any, GetPrimitive<C1>>,
-          resource
-        )
-      },
+      fields.get(constructor)?.(
+        getField as any,
+        pipe as Pipe<any, GetPrimitive<C1>>,
+        resource
+      ),
       {
         get: (target, prop) => {
           if (['hide', 'expose'].includes(prop as string)) {
