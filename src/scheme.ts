@@ -36,20 +36,13 @@ type GetParentApi<C extends Constructor, Creators> = Extract<
   ? ParentApi
   : never
 
-type Creator<
-  C1 extends Constructor,
-  Api extends Record<string, any>,
-  Resource
-> = (
+type Creator<C1 extends Constructor, Api, Resource> = (
   fields: FieldGetterFn<C1, Resource>,
   pipe: Pipe<any, GetPrimitive<C1>>,
   resource: Resource
 ) => Api
 
-type Entry<C extends Constructor, Api extends Record<string, any>> = [
-  C,
-  Creator<GetPrimitive<C>, Api, any>
-]
+type Entry<C extends Constructor, Api> = [C, Creator<GetPrimitive<C>, Api, any>]
 
 export type GetResourceType<Field extends CommonCreator<any, any, any, any>> =
   Field extends CommonCreator<any, any, infer Resource, any> ? Resource : never
@@ -95,8 +88,10 @@ type CommonCreator<
     transformation: Transformation<GetPrimitive<C1>, GetPrimitive<C1>>
   ): BindApi<C1, Creators, Resource, Omitted>
 
+  // Needs to be defined here explicitly to hold the correct Resource type
   getResource(): Resource
 
+  // @todo static
   hide<
     ToOmit extends keyof BindApi<C1, Creators, Resource, Omitted> = never
   >(): BindApi<C1, Creators, Resource, Omitted | ToOmit>
