@@ -51,56 +51,93 @@ type Entry<C extends Constructor, Api extends Record<string, any>> = [
   Creator<GetPrimitive<C>, Api, any>
 ]
 
-export type GetResourceType<Field extends CommonCreator<any, any, any>> =
-  Field extends CommonCreator<any, any, infer Resource> ? Resource : never
+export type GetResourceType<Field extends CommonCreator<any, any, any, any>> =
+  Field extends CommonCreator<any, any, infer Resource, any> ? Resource : never
 
 type BindCreatorApiArray<
   C extends Constructor,
   Api extends Array<any>,
   Creators,
-  Resource
+  Resource,
+  Omitted extends string | number | symbol
 > = Api extends [infer A, ...infer Rest]
   ? [
-      BindCreatorApi<C, A, Creators, Resource>,
-      ...BindCreatorApiArray<C, Rest, Creators, Resource>
+      BindCreatorApi<C, A, Creators, Resource, Omitted>,
+      ...BindCreatorApiArray<C, Rest, Creators, Resource, Omitted>
     ]
   : []
 
-type BindApi<C extends Constructor, Creators, Resource> = Extract<
+type BindApi<
+  C extends Constructor,
   Creators,
-  Creator<C, any, any>
-> extends Creator<C, infer Api, any>
-  ? BindCreatorApi<C, Api, Creators, Resource> &
-      CommonCreator<C, Creators, Resource>
-  : BindCreatorApi<C, {}, Creators, Resource> &
-      CommonCreator<C, Creators, Resource>
+  Resource,
+  Omitted extends string | number | symbol
+> = Extract<Creators, Creator<C, any, any>> extends Creator<C, infer Api, any>
+  ? Omit<
+      BindCreatorApi<C, Api, Creators, Resource, Omitted> &
+        CommonCreator<C, Creators, Resource, Omitted>,
+      Omitted
+    >
+  : Omit<CommonCreator<C, Creators, Resource, Omitted>, Omitted>
 
-type CommonCreator<C1 extends Constructor, Creators, Resource> = {
+type CommonCreator<
+  C1 extends Constructor,
+  Creators,
+  Resource,
+  Omitted extends string | number | symbol
+> = {
   transform<C2 extends Constructor>(
     constructor: C2,
     transformation: Transformation<GetPrimitive<C1>, GetPrimitive<C2>>
-  ): BindApi<C2, Creators, Resource>
+  ): BindApi<C2, Creators, Resource, Omitted>
 
   transform(
     transformation: Transformation<GetPrimitive<C1>, GetPrimitive<C1>>
-  ): BindApi<C1, Creators, Resource>
+  ): BindApi<C1, Creators, Resource, Omitted>
 
   getResource(): Resource
+
+  hide<
+    ToOmit extends keyof BindApi<C1, Creators, Resource, Omitted> = never
+  >(): BindApi<C1, Creators, Resource, Omitted | ToOmit>
+
+  expose<ToExpose extends Omitted>(): BindApi<
+    C1,
+    Creators,
+    Resource,
+    Exclude<Omitted, ToExpose>
+  >
 }
 
-type BindCreatorApi<C1 extends Constructor, Api, Creators, Resource> =
+type BindCreatorApi<
+  C1 extends Constructor,
+  Api,
+  Creators,
+  Resource,
+  Omitted extends string | number | symbol
+> =
   // 1. Check if Api is a Creator
   Api extends FieldGetter<infer C2>
-    ? BindApi<C2, Creators, Resource>
+    ? BindApi<C2, Creators, Resource, Omitted>
     : // 2. Check if Api is a function
     Api extends (...params: infer Params) => infer Result
-    ? (...params: Params) => BindCreatorApi<C1, Result, Creators, Resource>
+    ? (
+        ...params: Params
+      ) => BindCreatorApi<C1, Result, Creators, Resource, Omitted>
     : // 3. Check if Api is an object
     Api extends Record<string, any>
-    ? { [K in keyof Api]: BindCreatorApi<C1, Api[K], Creators, Resource> }
+    ? {
+        [K in keyof Api]: BindCreatorApi<
+          C1,
+          Api[K],
+          Creators,
+          Resource,
+          Omitted
+        >
+      }
     : // 4. Check if Api is an array
     Api extends Array<any>
-    ? BindCreatorApiArray<C1, Api, Creators, Resource>
+    ? BindCreatorApiArray<C1, Api, Creators, Resource, Omitted>
     : // 5. Otherwise return as it is
       Api
 
@@ -114,15 +151,23 @@ const extendScheme = <Entries extends Entry<any, any>, Resource>(
     : never
 
   type FieldBinder = Resource extends undefined
-    ? <C1 extends Constructor, FieldResource = Resource>(
+    ? <
+        C1 extends Constructor,
+        FieldResource extends Resource = Resource,
+        Omitted extends string | number | symbol = ''
+      >(
         constructor: C1,
         pipe?: Pipe<any, GetPrimitive<C1>> | []
-      ) => BindApi<C1, Creators, FieldResource>
-    : <C1 extends Constructor, FieldResource extends Resource>(
+      ) => BindApi<C1, Creators, FieldResource, Omitted>
+    : <
+        C1 extends Constructor,
+        FieldResource extends Resource = Resource,
+        Omitted extends string | number | symbol = ''
+      >(
         constructor: C1,
         pipe: Pipe<any, GetPrimitive<C1>> | [],
         resource: FieldResource
-      ) => BindApi<C1, Creators, FieldResource>
+      ) => BindApi<C1, Creators, FieldResource, Omitted>
 
   /**
    * Field binder
@@ -130,20 +175,22 @@ const extendScheme = <Entries extends Entry<any, any>, Resource>(
    * @param pipe
    * @returns API
    */
-  const getField = <C1 extends Constructor, FieldResource extends Resource>(
+  const getField = <
+    C1 extends Constructor,
+    FieldResource extends Resource,
+    Omitted extends string | number | symbol
+  >(
     constructor: C1,
     pipe: Pipe<any, GetPrimitive<C1>> | [] = [],
     resource = undefined as FieldResource
-  ): BindApi<C1, Creators, FieldResource> => {
+  ): BindApi<C1, Creators, FieldResource, Omitted> => {
     /**
      * Main transform function
      * @param constructorOrTransformation
      * @param transformation
      * @returns field API
      */
-    const transform: CommonCreator<C1, Creators, FieldResource>['transform'] = <
-      C2 extends Constructor
-    >(
+    const transform = <C2 extends Constructor>(
       constructorOrTransformation:
         | C2
         | Transformation<GetPrimitive<C1>, GetPrimitive<C1>>,
@@ -165,16 +212,32 @@ const extendScheme = <Entries extends Entry<any, any>, Resource>(
       return getField(thisConstructor, [...pipe, thisTransformation], resource)
     }
 
-    // return default API
-    return {
-      ...fields.get(constructor)?.(
-        getField as any,
-        pipe as Pipe<any, GetPrimitive<C1>>,
-        resource
-      ),
-      transform,
-      getResource: () => resource
-    }
+    return new Proxy(
+      {
+        ...fields.get(constructor)?.(
+          getField as any,
+          pipe as Pipe<any, GetPrimitive<C1>>,
+          resource
+        )
+      },
+      {
+        get: (target, prop) => {
+          if (['hide', 'expose'].includes(prop as string)) {
+            return () => getField(constructor, pipe, resource)
+          }
+
+          if (prop === 'getResource') {
+            return () => resource
+          }
+
+          if (prop === 'transform') {
+            return transform
+          }
+
+          return target[prop]
+        }
+      }
+    )
   }
 
   /**
