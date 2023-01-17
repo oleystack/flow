@@ -1,1 +1,1 @@
-export { portal } from './portal'
+export { createScheme } from './scheme'
