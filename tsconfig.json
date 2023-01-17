@@ -13,9 +13,10 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "types": [
+      "node",
       "vite/client"
     ],
-    "lib": ["esnext"],
+    "lib": ["esnext", "dom"],
   },
   "include": ["src"],
   "exclude": [

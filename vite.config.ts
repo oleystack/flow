@@ -21,7 +21,9 @@ export default defineConfig({
       fileName: (ext) => `index.${ext}.js`
       // for UMD name: 'GlobalName'
     },
-    rollupOptions: {},
+    rollupOptions: {
+      external: ['react-native/types', 'react']
+    },
     target: 'esnext',
     sourcemap: true
   }

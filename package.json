@@ -1,5 +1,5 @@
 {
-  "name": "@bit-about/flow",
+  "name": "@bit-about/native-portal",
   "description": "Powerfull extensible pipe architecture.",
   "author": "Gareneye",
   "license": "MIT",
@@ -22,8 +22,9 @@
     "dist"
   ],
   "peerDependencies": {
-    "react": "^18.0.0",
-    "scheduler": "^0.21.0"
+    "react": "^16.0.0 || ^17.0.0 || ^18.0.0",
+    "react-native": "^0.68.0 || ^0.69.0 || ^0.70.0 || ^0.71.0",
+    "scheduler": "^0.19.0 || ^0.20.0 || ^0.21.0 || ^0.22.0 || ^0.23.0"
   },
   "scripts": {
     "dev": "vite",
@@ -33,13 +34,9 @@
     "lint": "eslint --fix src/**",
     "format": "prettier src/** --write"
   },
-  "dependencies": {
-    "install": "^0.13.0",
-    "npm": "^8.19.2"
-  },
   "devDependencies": {
     "@types/jest": "^29.1.2",
-    "@types/node": "^18.7.8",
+    "@types/node": "^18.11.18",
     "@types/react": "^18.0.17",
     "@types/react-dom": "^18.0.6",
     "@typescript-eslint/eslint-plugin": "^5.33.1",
